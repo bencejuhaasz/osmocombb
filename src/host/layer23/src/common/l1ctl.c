@@ -115,7 +115,7 @@ static int rx_l1_fbsb_conf(struct osmocom_ms *ms, struct msgb *msg)
 		fr.ms = ms;
 		fr.band_arfcn = ntohs(dl->band_arfcn);
 		osmo_signal_dispatch(SS_L1CTL, S_L1CTL_FBSB_ERR, &fr);
-		return 0;
+		exit(0);
 	}
 
 	gsm_fn2gsmtime(&tm, ntohl(dl->frame_nr));
