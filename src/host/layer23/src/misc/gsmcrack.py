@@ -17,6 +17,7 @@ import serial
 import glob
 import json
 
+from runkraken import RunKraken
 from lxml import objectify
 from io import FileIO
 from binascii import *
@@ -748,7 +749,7 @@ class gsmcrack(object):
                 keystream= self.xor(bursts[i].cyphertext.text.strip(),plaintexts[i].strip())
             except:
                 continue
-            results= self.RunKraken(keystream)
+            results= RunKraken(keystream)
             if results:
                 print "Kraken was sucesfull"
                 for result in results:
@@ -815,64 +816,6 @@ class gsmcrack(object):
         print "Kc was not found"
         return False
 
-    def RunKraken( self, keystream ):
-        """
-        Runs kraken for speciffic keystream.
-
-        Kraken tries to reverse keystream and if it succedes it its possible
-        reversed key, we can use in find_kc.
-        
-        :param keystream: Keystream that we try to reverse
-        :type keystream: str
-        
-        :returns : List of (reversed key, offset)
-        :rtype: list
-        """ 
-
-        print "Running kraken for keystream", keystream
-
-        tn= None
-        if self.tn:
-            tn=self.tn
-        else:
-            tn= telnetlib.Telnet(self.kraken_ip, self.kraken_port)
-
-        try:
-            sleep(2)
-            tn.write("crack %s\r\n" % keystream)
-        except:
-            return []
-
-        id= -1
-        result=[]
-        while 1:
-            try:
-                (index, match, text)= tn.expect([
-                       '103\s+([0-9]+)\s+([0-9ABCDEF]+)\s+([0-9]+)',
-                       '404\s+([0-9]+)',
-                       '101\s+([0-9]+)',
-                      ], 300)
-            except:
-                break
-
-            if index==-1:
-                if id==-1:
-                    tn.write("crack %s\r\n" % keystream)
-                    continue
-                break
-            elif index==2:
-                id=match.group(1)
-                print "Crack id is:", id
-            elif index==1:
-                if match.group(1)==id:
-                    print "End of crack:", id
-                    break
-            elif index==0:
-                if match.group(1)==id:
-                    print "New result for crack:", id, match.group(2), match.group(3)
-                    result.append((match.group(2),int(match.group(3)),))
-
-        return result
 
     def __init__( self, files, prediction_methods, 
             kraken_ip="localhost", kraken_port=6010):
